@@ -1,11 +1,11 @@
 //! Module for the DIRAC Benchmark 2012 (DB12) logic.
 
-use rand::Rng;
 use rand_distr::{Distribution, Normal};
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::Instant;
 
 /// Number of iterations corresponding to 1kHS2k (250 HS06 seconds).
-const ITERATIONS: u64 = 1000 * 1000 * 12; // 12M iterations (ajusté pour Rust)
+const ITERATIONS: u64 = 1000 * 1000 * 12;
+
 /// Calibration factor (from Python version).
 const CALIBRATION: f64 = 250.0;
 
@@ -18,17 +18,31 @@ pub struct BenchmarkResult {
     pub unit: String,       // Unit ("DB12")
 }
 
+/// Gets the current CPU time (user + system) for the current process.
+fn cpu_time() -> f64 {
+    unsafe {
+        let mut tms = libc::tms {
+            tms_utime: 0,
+            tms_stime: 0,
+            tms_cutime: 0,
+            tms_cstime: 0,
+        };
+        libc::times(&mut tms);
+        (tms.tms_utime + tms.tms_stime) as f64 / libc::sysconf(libc::_SC_CLK_TCK) as f64
+    }
+}
+
 /// Runs a single DB12 benchmark iteration.
 ///
 /// # Arguments
 /// * `iterations` - Number of benchmark iterations to run.
-/// * `correction` - Whether to apply a correction factor.
+/// * `_correction` - Whether to apply a _correction factor.
 ///
 /// # Returns
 /// `BenchmarkResult` with CPU time, wall time, and normalized score.
-pub fn single_dirac_benchmark(iterations: u64, correction: bool) -> BenchmarkResult {
+pub fn single_dirac_benchmark(iterations: u64, _correction: bool) -> BenchmarkResult {
     let normal = Normal::new(10.0, 1.0).unwrap();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut m1 = 0.0;
     let mut m2 = 0.0;
@@ -68,41 +82,10 @@ pub fn single_dirac_benchmark(iterations: u64, correction: bool) -> BenchmarkRes
     // Calculate normalized score
     let norm = CALIBRATION * iterations as f64 / cpu_time;
 
-    // Apply correction if needed
-    let norm = if correction {
-        apply_norm_correction(norm)
-    } else {
-        norm
-    };
-
     BenchmarkResult {
         cpu_time,
         wall_time,
         norm,
         unit: "DB12".to_string(),
     }
-}
-
-/// Gets the current CPU time (user + system) for the current process.
-/// Equivalent to `os.times()[0] + os.times()[1]` in Python.
-fn cpu_time() -> f64 {
-    unsafe {
-        let mut tms = libc::tms {
-            tms_utime: 0,
-            tms_stime: 0,
-            tms_cutime: 0,
-            tms_cstime: 0,
-        };
-        libc::times(&mut tms);
-        (tms.tms_utime + tms.tms_stime) as f64 / libc::sysconf(libc::_SC_CLK_TCK) as f64
-    }
-}
-
-/// Applies a correction factor to the normalized score.
-/// In Rust, this may not be necessary if performance is consistent.
-fn apply_norm_correction(norm: f64) -> f64 {
-    // TODO: Implement correction logic if needed (e.g., for compatibility with Python scores).
-    // For now, return the raw norm (Rust should be stable across versions).
-    log::warn!("Correction factors are not yet implemented for Rust. Returning raw norm.");
-    norm
 }

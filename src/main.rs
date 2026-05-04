@@ -1,7 +1,7 @@
 //! DB12 Rust CLI.
 
 use clap::{Parser, Subcommand};
-use db12_rs::benchmark::{single_dirac_benchmark, BenchmarkResult};
+use db12_rs::benchmark::single_dirac_benchmark;
 use std::fs::File;
 use std::io::Write;
 
