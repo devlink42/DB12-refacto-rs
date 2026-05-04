@@ -16,10 +16,6 @@ struct Cli {
     #[arg(long, default_value_t = 1)]
     iterations: u64,
 
-    /// Disable norm correction.
-    #[arg(long)]
-    no_correction: bool,
-
     /// Output results to a JSON file.
     #[arg(long)]
     json: Option<String>,
@@ -44,22 +40,20 @@ fn main() {
     env_logger::init();
     let cli = Cli::parse();
 
-    let correction = !cli.no_correction;
-
     let result = match cli.command {
         Commands::Single => {
-            let res = single_dirac_benchmark(cli.iterations, correction);
+            let res = single_dirac_benchmark(cli.iterations);
             vec![res]
         }
         Commands::Multiple { copies } => {
             (0..copies)
-                .map(|_| single_dirac_benchmark(cli.iterations, correction))
+                .map(|_| single_dirac_benchmark(cli.iterations))
                 .collect()
         }
         Commands::Wholenode => {
             let copies = num_cpus::get();
             (0..copies)
-                .map(|_| single_dirac_benchmark(cli.iterations, correction))
+                .map(|_| single_dirac_benchmark(cli.iterations))
                 .collect()
         }
     };

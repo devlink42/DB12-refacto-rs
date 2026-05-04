@@ -40,7 +40,7 @@ fn cpu_time() -> f64 {
 ///
 /// # Returns
 /// `BenchmarkResult` with CPU time, wall time, and normalized score.
-pub fn single_dirac_benchmark(iterations: u64, _correction: bool) -> BenchmarkResult {
+pub fn single_dirac_benchmark(iterations: u64) -> BenchmarkResult {
     let normal = Normal::new(10.0, 1.0).unwrap();
     let mut rng = rand::rng();
 
